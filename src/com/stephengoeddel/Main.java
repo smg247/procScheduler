@@ -14,7 +14,15 @@ public class Main {
         Scheduler srts = new ShortestRemainingTimeScheduler();
         List<Process> seedProcesses = createSeedProcesses();
         seedProcesses.forEach(srts::addProcess);
+        System.out.println("================== Shortest Remaining Time Scheduler ==================");
         srts.run();
+
+        seedProcesses.forEach(Process::resetTimeRemaining);
+
+        Scheduler lotteryScheduler = new LotteryScheduler();
+        seedProcesses.forEach(lotteryScheduler::addProcess);
+        System.out.println("================== Lottery Scheduler ==================");
+        lotteryScheduler.run();
     }
 
     private static List<Process> createSeedProcesses() {

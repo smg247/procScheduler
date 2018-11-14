@@ -1,5 +1,7 @@
 package com.stephengoeddel;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 public class Process {
@@ -9,7 +11,7 @@ public class Process {
     private final long totalTime;
     private long timeRemaining;
     private long totalWaitTime;
-    //TODO: add List of Tickets
+    private List<LotteryTicket> tickets;
 
 
     public Process(int id, String name, long entryTime, long totalTime) {
@@ -18,6 +20,7 @@ public class Process {
         this.entryTime = entryTime;
         this.totalTime = totalTime;
         this.timeRemaining = totalTime;
+        tickets = new ArrayList<>();
     }
 
     public int getId() {
@@ -54,6 +57,19 @@ public class Process {
 
     public boolean isFinished() {
         return timeRemaining <= 0;
+    }
+
+    public void addLotteryTicket(LotteryTicket lotteryTicket) {
+        tickets.add(lotteryTicket);
+    }
+
+    public boolean hasWinningTicket(int ticketNumber) {
+        return tickets.stream()
+                .anyMatch(ticket -> ticket.isWinner(ticketNumber));
+    }
+
+    public void resetTimeRemaining() {
+        timeRemaining = totalTime;
     }
 
     @Override
