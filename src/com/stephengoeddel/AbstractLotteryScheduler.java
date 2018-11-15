@@ -4,11 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
-public class LotteryScheduler extends Scheduler {
-    private static final int NUM_LOTTERY_TICKETS = 50;
+public abstract class AbstractLotteryScheduler extends Scheduler {
 
-    private List<LotteryTicket> tickets = new ArrayList<>();
-    private int nextLotteryTicketNumber;
+    protected List<LotteryTicket> tickets = new ArrayList<>();
+    protected int nextLotteryTicketNumber;
 
     @Override
     protected Process determineNextProcessToRun() {
@@ -25,16 +24,22 @@ public class LotteryScheduler extends Scheduler {
             currentlyRunningProcess = process;
         }
 
-        for (int i = 0; i < NUM_LOTTERY_TICKETS; i++) {
-            LotteryTicket lotteryTicket = new LotteryTicket(nextLotteryTicketNumber + i);
-            process.addLotteryTicket(lotteryTicket);
-            tickets.add(lotteryTicket);
+        distributeLotteryTickets(process);
+    }
+
+    @Override
+    protected void notifyOfFinishedProcess(Process process) {
+        for (LotteryTicket ticket : process.getTickets()) {
+            tickets.remove(ticket);
         }
 
-        nextLotteryTicketNumber += NUM_LOTTERY_TICKETS;
+        process.clearTickets();
     }
 
     private int drawTicketNumber() {
-        return ThreadLocalRandom.current().nextInt(0, nextLotteryTicketNumber);
+        int ticketIndex = ThreadLocalRandom.current().nextInt(0, tickets.size());
+        return tickets.get(ticketIndex).getNumber();
     }
+
+    protected abstract void distributeLotteryTickets(Process process);
 }

@@ -1,6 +1,6 @@
 package com.stephengoeddel;
 
-public class ShortestRemainingTimeScheduler extends Scheduler {
+public class ShortestRemainingTimeFirstScheduler extends Scheduler {
 
     @Override
     protected Process determineNextProcessToRun() {
@@ -21,5 +21,10 @@ public class ShortestRemainingTimeScheduler extends Scheduler {
         if (currentlyRunningProcess == null) {
             currentlyRunningProcess = process;
         }
+    }
+
+    @Override
+    protected void notifyOfFinishedProcess(Process process) {
+        // No need to do anything here
     }
 }

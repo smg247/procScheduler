@@ -1,6 +1,7 @@
 package com.stephengoeddel;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -10,7 +11,7 @@ public class Process {
     private final long entryTime;
     private final long totalTime;
     private long timeRemaining;
-    private long totalWaitTime;
+    private List<Long> waitPeriods;
     private List<LotteryTicket> tickets;
 
 
@@ -20,6 +21,15 @@ public class Process {
         this.entryTime = entryTime;
         this.totalTime = totalTime;
         this.timeRemaining = totalTime;
+        waitPeriods = new ArrayList<>();
+        waitPeriods.add(0L); // Initialize the first empty wait period
+        tickets = new ArrayList<>();
+    }
+
+    public void resetProcess() {
+        timeRemaining = totalTime;
+        waitPeriods = new ArrayList<>();
+        waitPeriods.add(0L); // Initialize the first empty wait period
         tickets = new ArrayList<>();
     }
 
@@ -44,15 +54,23 @@ public class Process {
     }
 
     public long getTotalWaitTime() {
-        return totalWaitTime;
+        return waitPeriods.stream().mapToLong(Long::longValue).sum();
     }
 
-    public void incrementWaitTime(long waitTime) {
-        totalWaitTime += waitTime;
+    public long getLongestWaitPeriod() {
+        List<Long> waitPeriodCopy = new ArrayList<>(waitPeriods);
+        waitPeriodCopy.sort(Collections.reverseOrder());
+        return waitPeriodCopy.get(0);
+    }
+
+    public void notifyOfWait(long waitTime) {
+        Long currentWaitChunk = waitPeriods.get(waitPeriods.size() - 1);
+        waitPeriods.set(waitPeriods.size() - 1, currentWaitChunk + waitTime);
     }
 
     public void runProcessFor(long time) {
         timeRemaining -= time;
+        waitPeriods.add(0L); // Begin a new wait period now that the process has had a burst
     }
 
     public boolean isFinished() {
@@ -68,8 +86,12 @@ public class Process {
                 .anyMatch(ticket -> ticket.isWinner(ticketNumber));
     }
 
-    public void resetTimeRemaining() {
-        timeRemaining = totalTime;
+    public void clearTickets() {
+        tickets.clear();
+    }
+
+    public List<LotteryTicket> getTickets() {
+        return tickets;
     }
 
     @Override
@@ -96,7 +118,9 @@ public class Process {
                 ", name='" + name + '\'' +
                 ", entryTime=" + entryTime +
                 ", totalTime=" + totalTime +
-                ", totalWaitTime=" + totalWaitTime +
+                ", timeRemaining=" + timeRemaining +
+                ", totalWaitTime=" + getTotalWaitTime() +
+                ", longestWaitPeriod=" + getLongestWaitPeriod() +
                 '}';
     }
 }
