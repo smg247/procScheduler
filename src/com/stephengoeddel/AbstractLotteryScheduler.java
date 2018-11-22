@@ -12,10 +12,12 @@ public abstract class AbstractLotteryScheduler extends Scheduler {
     @Override
     protected Process determineNextProcessToRun() {
         int ticketNumber = drawTicketNumber();
-        return processes.stream()
-                .filter(process -> process.hasWinningTicket(ticketNumber))
-                .findFirst()
-                .orElseThrow(() -> new IllegalStateException("No process won..."));
+        synchronized (processes) {
+            return processes.stream()
+                    .filter(process -> process.hasWinningTicket(ticketNumber))
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalStateException("No process won..."));
+        }
     }
 
     @Override

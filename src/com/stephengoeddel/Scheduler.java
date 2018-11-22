@@ -6,15 +6,17 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-public abstract class Scheduler {
-    protected List<Process> processes = new ArrayList<>();
+public abstract class Scheduler implements Runnable {
+    protected final List<Process> processes = new ArrayList<>();
     protected Process currentlyRunningProcess;
     private int totalBurstsRun = 0;
 
 
+    @Override
     public void run() {
         while (!allProcessesComplete()) {
             Process processToRun = determineNextProcessToRun();
+            currentlyRunningProcess = processToRun;
 //            System.out.println("Now Running: " + processToRun);
             try {
                 TimeUnit.MILLISECONDS.sleep(Timer.BURST_TIME);
@@ -28,9 +30,11 @@ public abstract class Scheduler {
                 notifyOfFinishedProcess(processToRun);
             }
 
-            for (Process process : processes) {
-                if (!process.equals(processToRun) && !process.isFinished()) {
-                    process.notifyOfWait(Timer.BURST_TIME);
+            synchronized (processes) {
+                for (Process process : processes) {
+                    if (!process.equals(processToRun) && !process.isFinished()) {
+                        process.notifyOfWait(Timer.BURST_TIME);
+                    }
                 }
             }
 
@@ -41,8 +45,10 @@ public abstract class Scheduler {
     }
 
     public void addProcess(Process process) {
-        processes.add(process);
-        internalAddProcess(process);
+        synchronized (processes) {
+            processes.add(process);
+            internalAddProcess(process);
+        }
     }
 
     private boolean allProcessesComplete() {
@@ -50,12 +56,17 @@ public abstract class Scheduler {
             return true;
         }
 
-        return processes.stream()
-                .allMatch(Process::isFinished);
+        synchronized (processes) {
+            return processes.stream()
+                    .allMatch(Process::isFinished);
+        }
     }
 
     private void printResults() {
         System.out.println("============ Results ============");
+        synchronized (processes) {
+            processes.sort(Comparator.comparingInt(Process::getId));
+        }
         processes.forEach(System.out::println);
 
         System.out.println("==== Total Bursts ====");
